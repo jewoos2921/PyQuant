@@ -21,7 +21,7 @@ namespace QuantCpp
 
             auto getNextWriteTo() noexcept
             {
-                return store_[next_write_index_];
+                return &store_[next_write_index_];
             }
             auto updateWriteIndex() noexcept
             {
@@ -40,8 +40,8 @@ namespace QuantCpp
                                                std::to_string(pthread_self()));
                 num_elements_--;
             }
-            
-            auto size() const noexcept 
+
+            auto size() const noexcept
             {
                 return num_elements_.load();
             }
