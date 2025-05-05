@@ -154,7 +154,7 @@ namespace QuantCpp
                            "setSOTimestamp() failed. errno:" + std::string(strerror(errno)));
                 }
             }
+            return socket_fd;
         }
-        return socket_fd;
     }
 }
