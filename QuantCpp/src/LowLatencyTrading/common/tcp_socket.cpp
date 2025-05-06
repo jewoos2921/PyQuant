@@ -52,7 +52,7 @@ namespace QuantCpp::Common
         next_send_valid_index_ = 0;
         return read_size > 0;
     }
-
+    
     auto TCPSocket::send(const void *data, size_t len) noexcept -> void
     {
         memcpy(outbound_data_.data() + next_send_valid_index_, data, len);
