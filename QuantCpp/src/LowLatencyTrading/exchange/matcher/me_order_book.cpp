@@ -109,15 +109,157 @@ namespace QuantCpp::Exchange
                     break;
                 }
             }
+            sprintf(buf, " <px:%3s p:%3s n:%3s> %-3s @ %-5s(%-4s)",
+                    priceToString(itr->price_).c_str(),
+                    priceToString(itr->prev_entry_->price_).c_str(),
+                    priceToString(itr->next_entry_->price_).c_str(),
+                    priceToString(itr->price_).c_str(),
+                    qtyToString(qty).c_str(),
+                    qtyToString(num_orders).c_str());
+
+            ss << buf;
+            for (auto o_itr = itr->first_me_order_;; o_itr = o_itr->next_order_)
+            {
+                if (detailed)
+                {
+                    sprintf(buf, "[oid:%s q:%s p:%s n:%s] ",
+                            orderIdToString(o_itr->market_order_id_).c_str(),
+                            qtyToString(o_itr->qty_).c_str(),
+                            orderIdToString(o_itr->prev_order_ ? o_itr->prev_order_->market_order_id_ : OrderId_INVALID).c_str(),
+                            orderIdToString(o_itr->next_order_ ? o_itr->next_order_->market_order_id_ : OrderId_INVALID).c_str());
+
+                    ss << buf;
+                }
+                if (o_itr->next_order_ == itr->first_me_order_)
+                    break;
+            }
+
+            ss << std::endl;
+
+            if (sanity_check)
+            {
+                if ((side == Side::SELL && last_price >= itr->price_) || (side == Side::BUY && last_price <= itr->price_))
+                {
+                    FATAL("Bids/Asks not sorted by ascending/descending prices last:" + priceToString(last_price) +
+                          " itr:" + itr->toString());
+                }
+                last_price = itr->price_;
+            }
         };
+
+        ss << "Ticker: " << tickerIdToString(ticker_id_) << std::endl;
+        {
+            auto ask_itr = asks_by_price_;
+            auto last_ask_price = std::numeric_limits<Price>::min();
+            for (size_t count = 0; ask_itr; ++count)
+            {
+                ss << "ASKS L:" << count << " => ";
+                auto next_ask_itr = (ask_itr->next_entry_ == asks_by_price_ ? nullptr : ask_itr->next_entry_);
+                printer(ss, ask_itr, Side::SELL, last_ask_price, validity_check);
+                ask_itr = next_ask_itr;
+            }
+        }
+
+        ss << std::endl
+           << "                            X" << std::endl
+           << std::endl;
+        {
+            auto bid_itr = bids_by_price_;
+            auto last_bid_price = std::numeric_limits<Price>::max();
+            for (size_t count = 0; bid_itr; ++count)
+            {
+                ss << "BIDS L:" << count << " => ";
+                auto next_bid_itr = (bid_itr->next_entry_ == bids_by_price_ ? nullptr : bid_itr->next_entry_);
+                printer(ss, bid_itr, Side::BUY, last_bid_price, validity_check);
+                bid_itr = next_bid_itr;
+            }
+        }
+
+        return ss.str();
     }
 
     auto MEOrderBook::addOrdersAtPrice(MEOrdersAtPrice *new_orders_at_price) noexcept
     {
+        price_orders_at_price_.at(priceToIndex(new_orders_at_price->price_)) = new_orders_at_price;
+
+        const auto best_orders_by_price = (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_);
+        if (UNLIKELY(!best_orders_by_price))
+        {
+            (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) = new_orders_at_price;
+            new_orders_at_price->prev_entry_ = new_orders_at_price->next_entry_ = new_orders_at_price;
+        }
+        else
+        {
+            auto target = best_orders_by_price;
+            bool add_after = ((new_orders_at_price->side_ == Side::SELL && new_orders_at_price->price_ > target->price_) ||
+                              (new_orders_at_price->side_ == Side::BUY && new_orders_at_price->price_ < target->price_));
+            if (add_after)
+            {
+                target = target->next_entry_;
+                add_after = ((new_orders_at_price->side_ == Side::SELL && new_orders_at_price->price_ > target->price_) ||
+                             (new_orders_at_price->side_ == Side::BUY && new_orders_at_price->price_ < target->price_));
+            }
+            while (add_after && target != best_orders_by_price)
+            {
+                add_after = ((new_orders_at_price->side_ == Side::SELL && new_orders_at_price->price_ > target->price_) ||
+                             (new_orders_at_price->side_ == Side::BUY && new_orders_at_price->price_ < target->price_));
+                if (add_after)
+                {
+                    target = target->next_entry_;
+                }
+            }
+            if (add_after)
+            {
+                if (target == best_orders_by_price)
+                {
+                    target = best_orders_by_price->prev_entry_;
+                }
+
+                new_orders_at_price->prev_entry_ = target;
+                target->next_entry_->prev_entry_ = new_orders_at_price;
+                new_orders_at_price->next_entry_ = target->next_entry_;
+                target->next_entry_ = new_orders_at_price;
+            }
+            else
+            {
+                new_orders_at_price->prev_entry_ = target->prev_entry_;
+                new_orders_at_price->next_entry_ = target;
+                target->prev_entry_->next_entry_ = new_orders_at_price;
+                target->prev_entry_ = new_orders_at_price;
+
+                if ((new_orders_at_price->side_ == Side::BUY && new_orders_at_price->price_ > best_orders_by_price->price_) ||
+                    (new_orders_at_price->side_ == Side::SELL && new_orders_at_price->price_ < best_orders_by_price->price_))
+                {
+                    target->next_entry_ = (target->next_entry_ == best_orders_by_price ? new_orders_at_price : target->next_entry_);
+                    (new_orders_at_price->side_ == Side::BUY ? bids_by_price_ : asks_by_price_) = new_orders_at_price;
+                }
+            }
+        }
     }
 
     auto MEOrderBook::removeOrdersAtPrice(Side side, Price price) noexcept
     {
+        const auto best_orders_by_price = (side == Side::BUY ? bids_by_price_ : asks_by_price_);
+        auto orders_at_price = getOrdersAtPrice(price);
+
+        if (UNLIKELY(orders_at_price->next_entry_ == orders_at_price))
+        {
+            (side == Side::BUY ? bids_by_price_ : asks_by_price_) = nullptr;
+        }
+        else
+        {
+            orders_at_price->prev_entry_->next_entry_ = orders_at_price->next_entry_;
+            orders_at_price->next_entry_->prev_entry_ = orders_at_price->prev_entry_;
+
+            if (orders_at_price == best_orders_by_price)
+            {
+                (side == Side::BUY ? bids_by_price_ : asks_by_price_) = orders_at_price->next_entry_;
+            }
+
+            orders_at_price->prev_entry_ = orders_at_price->next_entry_ = nullptr;
+        }
+        price_orders_at_price_.at(priceToIndex(price)) = nullptr;
+        orders_at_price_pool_.deallocate(orders_at_price);
     }
 
     auto MEOrderBook::getNextPriority(Price price) noexcept
@@ -227,7 +369,7 @@ namespace QuantCpp::Exchange
         return leaves_qty;
     }
 
-    void MEOrderBook::removeOrder(MEOrder *order) noexcept
+    auto MEOrderBook::removeOrder(MEOrder *order) noexcept -> void
     {
         auto orders_at_price = getOrdersAtPrice(order->price_);
 

@@ -85,7 +85,7 @@ namespace QuantCpp::Exchange
                            Qty qty,
                            Qty new_market_order_id) noexcept;
                            
-        auto removeOrder(MEOrder *order) noexcept;
+        auto removeOrder(MEOrder *order) noexcept -> void;
         auto addOrder(MEOrder *order) noexcept;
     };
     using OrderBookHashMap = std::array<MEOrderBook *, ME_MAX_TICKERS>;
