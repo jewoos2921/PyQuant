@@ -70,18 +70,21 @@ namespace QuantCpp::Exchange
         auto addOrdersAtPrice(MEOrdersAtPrice *new_orders_at_price) noexcept;
         auto removeOrdersAtPrice(Side side, Price price) noexcept;
         auto getNextPriority(Price price) noexcept;
+
         auto match(TickerId ticker_id,
                    ClientId client_id, Side side,
                    OrderId client_order_id,
                    OrderId new_market_order_id,
-                   MEOrder *bid_itr, Qty *leaves_qty) noexcept -> void;
+                   MEOrder *bid_itr, Qty *leaves_qty) noexcept;
+
         auto checkForMatch(ClientId client_id,
                            OrderId client_order_id,
                            TickerId ticker_id,
                            Side side,
                            Price price,
                            Qty qty,
-                           Qty new_market_order_id) noexcept -> void;
+                           Qty new_market_order_id) noexcept;
+                           
         auto removeOrder(MEOrder *order) noexcept;
         auto addOrder(MEOrder *order) noexcept;
     };
