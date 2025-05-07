@@ -55,10 +55,61 @@ namespace QuantCpp::Exchange
     auto MEOrderBook::cancel(ClientId client_id, OrderId order_id,
                              TickerId ticker_id) noexcept -> void
     {
+        auto is_cancelable = (client_id < cid_oid_to_order_.size());
+        MEOrder *exchange_order = nullptr;
+        if (LIKELY(is_cancelable))
+        {
+            auto &co_itr = cid_oid_to_order_.at(client_id);
+            exchange_order = co_itr.at(order_id);
+            is_cancelable = (exchange_order != nullptr);
+        }
+
+        if (UNLIKELY(!is_cancelable))
+        {
+            client_response_ = {ClientResponseType::CANCEL_REJECTED,
+                                client_id, ticker_id, order_id, OrderId_INVALID, Side::INVALID,
+                                Price_INVALID, Qty_INVALID, Qty_INVALID};
+        }
+        else
+        {
+            client_response_ = {ClientResponseType::CANCELED,
+                                client_id, ticker_id, order_id, exchange_order->market_order_id_,
+                                exchange_order->side_, exchange_order->price_, Qty_INVALID, exchange_order->qty_};
+            market_update_ = {MarketUpdateType::CANCEL,
+                              exchange_order->market_order_id_,
+                              ticker_id,
+                              exchange_order->side_,
+                              exchange_order->price_,
+                              0,
+                              exchange_order->priority_};
+            removeOrder(exchange_order);
+
+            matching_engine_->sendMarketUpdate(&market_update_);
+        }
+
+        matching_engine_->sendClientResponse(&client_response_);
     }
 
     auto MEOrderBook::toString(bool detailed, bool validity_check) const -> std::string
     {
+        std::stringstream ss;
+        std::string time_str;
+        auto printer = [&](std::stringstream &ss,
+                           MEOrdersAtPrice *itr, Side side, Price &last_price, bool sanity_check)
+        {
+            char buf[4096];
+            Qty qty = 0;
+            size_t num_orders = 0;
+            for (auto o_itr = itr->first_me_order_;; o_itr = o_itr->next_order_)
+            {
+                qty += o_itr->qty_;
+                ++num_orders;
+                if (o_itr->next_order_ == itr->first_me_order_)
+                {
+                    break;
+                }
+            }
+        };
     }
 
     auto MEOrderBook::addOrdersAtPrice(MEOrdersAtPrice *new_orders_at_price) noexcept

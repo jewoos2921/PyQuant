@@ -26,7 +26,21 @@ namespace QuantCpp::Exchange
         auto sendMarketUpdate(const MEMarketUpdate *market_update) noexcept;
         auto run() noexcept;
 
+        MatchingEngine() = delete;
+        MatchingEngine(const MatchingEngine &) = delete;
+        MatchingEngine(const MatchingEngine &&) = delete;
+        MatchingEngine &operator=(const MatchingEngine &) = delete;
+        MatchingEngine &operator=(const MatchingEngine &&) = delete;
+
     private:
         OrderBookHashMap ticker_order_book_;
+        ClientRequestLFQueue *incoming_requests_ = nullptr;
+        ClientResponseLFQueue *outgoing_ogw_responses_ = nullptr;
+        MEMarketUpdateLFQueue *outgoing_md_updates_ = nullptr;
+
+        volatile bool run_{false};
+
+        std::string time_str_;
+        Logger logger_;
     };
 } // namespace QuantCpp::Exchange

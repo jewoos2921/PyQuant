@@ -16,7 +16,7 @@ namespace QuantCpp::Exchange
         CANCEL = 2
     };
 
-    inline std::string clientResponseTypeToString(ClientRequestType type)
+    inline std::string clientReqeustTypeToString(ClientRequestType type)
     {
         switch (type)
         {
@@ -46,7 +46,7 @@ namespace QuantCpp::Exchange
         auto toString() const
         {
             std::stringstream ss;
-            ss << "MEClientRequest [ " << "type: " << clientResponseTypeToString(type_) << " client:"
+            ss << "MEClientRequest [ " << "type: " << clientReqeustTypeToString(type_) << " client:"
                << clientIdToString(client_id_)
                << " ticker:" << tickerIdToString(ticker_id_)
                << " client_order_id:" << orderIdToString(client_order_id_)
