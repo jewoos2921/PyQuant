@@ -10,5 +10,9 @@
 
 namespace QuantCpp::Exchange
 {
-
+    class MatchingEngine final
+    {
+    private:
+        OrderBookHashMap ticker_order_book_;
+    };
 } // namespace QuantCpp::Exchange
