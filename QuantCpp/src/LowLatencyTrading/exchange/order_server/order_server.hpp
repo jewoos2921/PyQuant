@@ -12,6 +12,9 @@
 #include "order_server/client_response.hpp"
 #include "order_server/fifo_sequencer.hpp"
 
-namespace QuantCpp::Exchange {
-
+namespace QuantCpp::Exchange
+{
+    class OrderServer
+    {
+    };
 }

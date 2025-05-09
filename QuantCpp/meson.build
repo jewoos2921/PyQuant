@@ -1,8 +1,5 @@
 project('QuantCpp', 'cpp',
-  version: '0.1',
-  default_options: ['cpp_std=c++23'])
+        version : '1.0.0',
+        default_options : ['warning_level=3', 'cpp_std=c++2a'])
 
-# executable('quant',
-#   'main.cpp',
-#   install: true)
 subdir('src')
