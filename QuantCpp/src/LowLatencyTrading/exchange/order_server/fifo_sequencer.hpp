@@ -54,13 +54,18 @@ namespace QuantCpp::Exchange
         }
 
         FIFOSequencer() = delete;
+
         FIFOSequencer(const FIFOSequencer &) = delete;
+
         FIFOSequencer(const FIFOSequencer &&) = delete;
+
         FIFOSequencer &operator=(const FIFOSequencer &) = delete;
+
         FIFOSequencer &operator=(const FIFOSequencer &&) = delete;
 
     private:
         ClientRequestLFQueue *incoming_requests_ = nullptr;
+
         std::string time_str_;
         Logger *logger_ = nullptr;
 
@@ -69,7 +74,7 @@ namespace QuantCpp::Exchange
             Nanos recv_time_ = 0;
             MEClientRequest request_;
 
-            auto operator<(const RecvTimeClientRequest &rhs) const
+            bool operator<(const RecvTimeClientRequest &rhs) const
             {
                 return (recv_time_ < rhs.recv_time_);
             }
