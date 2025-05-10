@@ -4,23 +4,29 @@
 
 #include "common/types.hpp"
 #include "common/lf_queue.hpp"
+
 using namespace QuantCpp::Common;
 namespace QuantCpp::Exchange
 {
-#pragma pack(push, 1)
+
     enum class MarketUpdateType : uint8_t
     {
         INVALID = 0,
-        ADD = 1,
-        MODIFY = 2,
-        CANCEL = 3,
-        TRADE = 4
+        CLEAR = 1,
+        ADD = 2,
+        MODIFY = 3,
+        CANCEL = 4,
+        TRADE = 5,
+        SNAPSHOT_START = 6,
+        SNAPSHOT_END = 7
     };
 
     inline std::string marketUpdateTypeToString(MarketUpdateType type)
     {
         switch (type)
         {
+        case MarketUpdateType::CLEAR:
+            return "CLEAR";
         case MarketUpdateType::ADD:
             return "ADD";
         case MarketUpdateType::MODIFY:
@@ -29,12 +35,18 @@ namespace QuantCpp::Exchange
             return "CANCEL";
         case MarketUpdateType::TRADE:
             return "TRADE";
+        case MarketUpdateType::SNAPSHOT_START:
+            return "SNAPSHOT_START";
+        case MarketUpdateType::SNAPSHOT_END:
+            return "SNAPSHOT_END";
         case MarketUpdateType::INVALID:
             return "INVALID";
         default:
             return "UNKNOWN";
         }
     }
+
+#pragma pack(push, 1)
     struct MEMarketUpdate
     {
         MarketUpdateType type_ = MarketUpdateType::INVALID;
@@ -54,8 +66,22 @@ namespace QuantCpp::Exchange
             return ss.str();
         }
     };
+
+    struct MDPMarketUpdate
+    {
+        size_t seq_num_{0};
+        MEMarketUpdate me_market_update_;
+
+        auto toString() const -> std::string
+        {
+            std::stringstream ss;
+            ss << "MDPMarketUpdate [ seq_num: " << seq_num_ << " " << me_market_update_.toString() << " ]";
+            return ss.str();
+        }
+    };
 #pragma pack(pop)
     // LFQueue가 QuantCpp::Common 네임스페이스에 정의되어 있다면
     using MEMarketUpdateLFQueue = LFQueue<MEMarketUpdate>;
+    using MDPMarketUpdateLFQueue = LFQueue<MDPMarketUpdate>;
 
 } // namespace QuantCpp::Exchange
