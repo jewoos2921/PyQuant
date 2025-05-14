@@ -62,5 +62,6 @@
         "typeinfo": "cpp",
         "variant": "cpp",
         "fstream": "cpp"
-    }
+    },
+    "CodeGPT.apiKey": "OpenAI"
 }
