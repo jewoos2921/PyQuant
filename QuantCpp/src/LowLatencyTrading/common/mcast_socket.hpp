@@ -22,7 +22,7 @@ namespace QuantCpp
             auto join(const std::string &ip) -> bool;
             auto leave(const std::string &ip, int port) -> void;
             auto sendAndRecv() noexcept -> bool;
-            auto send(const char *data, size_t len) -> bool;
+            auto send(const void *data, size_t len) -> bool;
             int socket_fd_ = -1;
             std::vector<char> outbound_data_;
             size_t next_send_valid_index_ = 0;

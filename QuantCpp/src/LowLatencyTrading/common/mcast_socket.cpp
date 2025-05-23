@@ -44,7 +44,7 @@ namespace QuantCpp::Common
         return n_rcv > 0;
     }
 
-    auto McastSocket::send(const char *data, size_t len) -> bool
+    auto McastSocket::send(const void *data, size_t len) -> bool
     {
         memcpy(outbound_data_.data() + next_send_valid_index_, data, len);
         next_send_valid_index_ += len;
