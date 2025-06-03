@@ -94,7 +94,8 @@ namespace QuantCpp::Common
     {
         INVALID = 0,
         BUY = 1,
-        SELL = -1
+        SELL = -1,
+        MAX = 2
     };
 
     inline auto sideToString(Side side) -> std::string
@@ -107,6 +108,8 @@ namespace QuantCpp::Common
             return "SELL";
         case Side::INVALID:
             return "INVALID";
+        case Side::MAX:
+            return "MAX";
         default:
             return "UNKNOWN";
         }
