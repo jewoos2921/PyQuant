@@ -13,7 +13,7 @@ namespace QuantCpp::Trading
         INVALID = 0,
         PENDING_NEW = 1,
         LIVE = 2,
-        PENDING_CALL = 3,
+        PENDING_CANCEL = 3,
         DEAD = 4
     };
 
@@ -27,8 +27,8 @@ namespace QuantCpp::Trading
             return "PENDING_NEW";
         case OMOrderState::LIVE:
             return "LIVE";
-        case OMOrderState::PENDING_CALL:
-            return "PENDING_CALL";
+        case OMOrderState::PENDING_CANCEL:
+            return "PENDING_CANCEL";
         case OMOrderState::DEAD:
             return "DEAD";
         default:
@@ -38,29 +38,29 @@ namespace QuantCpp::Trading
 
     struct OMOrder
     {
-        TickerId ticker_id;
-        OrderId order_id;
+        TickerId ticker_id_ = TickerId_INVALID;
+        OrderId order_id_ = OrderId_INVALID;
         Side side_ = Side::INVALID;
         Price price_ = Price_INVALID;
         Qty qty_ = Qty_INVALID;
-        OMOrderState state = OMOrderState::INVALID;
+        OMOrderState order_state_ = OMOrderState::INVALID;
 
         auto to_string() const -> std::string
         {
             std::ostringstream oss;
             oss << "OMOrder{"
-                << "ticker_id: " << tickerIdToString(ticker_id)
-                << ", order_id: " << orderIdToString(order_id)
+                << "ticker_id: " << tickerIdToString(ticker_id_)
+                << ", order_id: " << orderIdToString(order_id_)
                 << ", side: " << sideToString(side_)
                 << ", price: " << priceToString(price_)
                 << ", qty: " << qtyToString(qty_)
-                << ", state: " << OMOrderStateToString(state)
+                << ", state: " << OMOrderStateToString(order_state_)
                 << "}";
             return oss.str();
         }
     };
 
     using OMOrderSideHashMap = std::array<OMOrder, sideToIndex(Side::MAX) + 1>;
-    using OMOrderTickerSsideHashMap = std::array<OMOrder, ME_MAX_TICKERS>;
+    using OMOrderTickerSideHashMap = std::array<OMOrderSideHashMap, ME_MAX_TICKERS>;
 
 } // namespace QuantCpp::Trading
