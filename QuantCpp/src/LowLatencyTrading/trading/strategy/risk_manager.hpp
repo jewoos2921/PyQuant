@@ -39,7 +39,7 @@ namespace QuantCpp::Trading
     {
     public:
         RiskManager(Logger *logger, PositionKeeper *position_keeper)
-            : logger_(logger), position_keeper_(position_keeper);
+            : logger_(logger), position_keeper_(position_keeper) {}
 
         RiskManager() = delete;
         // Disable copy and move semantics

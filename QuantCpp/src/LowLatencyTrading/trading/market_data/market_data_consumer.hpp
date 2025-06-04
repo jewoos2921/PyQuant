@@ -43,7 +43,7 @@ namespace QuantCpp::Trading
         Logger logger_;
         McastSocket incremental_mcast_socket_, snapshot_mcast_socket_;
 
-        bool is_recovery_{false};
+        bool in_recovery_{false};
         const std::string iface_, snapshot_ip_;
         const int snapshot_port_;
         using QueueMarketUpdates = std::map<size_t, Exchange::MEMarketUpdate>;
