@@ -38,7 +38,7 @@ namespace QuantCpp::Trading
         }
 
         auto addFill(const Exchange::MEClientResponse *client_response,
-                     Logger logger) noexcept
+                     Logger *logger) noexcept
         {
             const auto old_position = position_;
             const auto side_index = sideToIndex(client_response->side_);
@@ -87,11 +87,11 @@ namespace QuantCpp::Trading
             }
             total_pnl_ = real_pnl_ + unreal_pnl_;
             std::string time_str;
-            logger.log("%:% %() % % %\n",
-                       __FILE__,
-                       __LINE__, __FUNCTION__,
-                       getCurrentTimeStr(&time_str),
-                       toString(), client_response->toString().c_str());
+            logger->log("%:% %() % % %\n",
+                        __FILE__,
+                        __LINE__, __FUNCTION__,
+                        getCurrentTimeStr(&time_str),
+                        toString(), client_response->toString().c_str());
         }
 
         auto updateBBO(const BBO *bbo, Logger *logger) noexcept
@@ -147,7 +147,7 @@ namespace QuantCpp::Trading
     public:
         auto addFill(const Exchange::MEClientResponse *client_response) -> void
         {
-            ticker_position_.at(client_response->ticker_id_).addFill(client_response, *logger_);
+            ticker_position_.at(client_response->ticker_id_).addFill(client_response, logger_);
         }
         auto updateBBO(TickerId ticker_id, const BBO *bbo) -> void
         {

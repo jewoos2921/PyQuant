@@ -35,11 +35,50 @@ namespace QuantCpp::Trading
             return "";
         }
     }
+    struct RiskInfo
+    {
+        const PositionInfo *position_info_ = nullptr;
+        RiskCfg rick_cfg_;
+
+        auto checkPreTradeRisk(Side side, Qty qty) const noexcept
+        {
+            if (UNLIKELY(qty > rick_cfg_.max_order_size_))
+            {
+                return RiskCheckResult::ORDER_TOO_LARGE;
+            }
+            if (UNLIKELY(std::abs(position_info_->position_ + sideToValue(side) *
+                                                                  static_cast<int32_t>(qty)) > static_cast<int32_t>(rick_cfg_.max_position_)))
+            {
+                return RiskCheckResult::POSITION_TOO_LARGE;
+            }
+            if (UNLIKELY(position_info_->total_pnl_ < rick_cfg_.max_loss_))
+            {
+                return RiskCheckResult::LOSS_TOO_LARGE;
+            }
+            return RiskCheckResult::ALLOWED;
+        }
+
+        auto toString() const -> std::string
+        {
+            std::stringstream ss;
+            ss << "RiskInfo["
+               << "position_info:" << position_info_->toString()
+               << ", risk_cfg:" << rick_cfg_.toString()
+               << "]";
+            return ss.str();
+        }
+    };
+
+    using TickerRiskInfoHashMap = std::array<RiskInfo, ME_MAX_TICKERS>;
+
     class RiskManager
     {
     public:
-        RiskManager(Logger *logger, PositionKeeper *position_keeper)
-            : logger_(logger), position_keeper_(position_keeper) {}
+        RiskManager(Logger *logger, const PositionKeeper *position_keeper,
+                    const TradeEngineCfgHashMap &ticker_cfg);
+
+        auto checkPreTradeRisk(TickerId ticker_id,
+                               Side side, Qty qty) const noexcept;
 
         RiskManager() = delete;
         // Disable copy and move semantics
@@ -48,9 +87,10 @@ namespace QuantCpp::Trading
         RiskManager &operator=(const RiskManager &) = delete;
         RiskManager &operator=(const RiskManager &&) = delete;
 
-        auto onOMOrderUpdate(const OMOrder &order) noexcept -> void;
-
     private:
         Logger *logger_;
+        std::string time_str_;
+
+        TickerRiskInfoHashMap ticker_risk_;
     };
 } // namespace QuantCpp::Trading
